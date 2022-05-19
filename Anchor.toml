@@ -1,7 +1,7 @@
 [features]
 seeds = false
 [programs.devnet]
-soltrans = "AZpNhwAtYUbsMnDGPFkTXnnkG2cDkUoSVqyYvyAfDbtL"
+soltrans = "FGLHHdApR2TXq9fXCdWE9SSeVzs4btmN77j7MjkS36dH"
 
 [registry]
 url = "https://anchor.projectserum.com"

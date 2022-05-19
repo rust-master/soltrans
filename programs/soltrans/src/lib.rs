@@ -1,56 +1,40 @@
 use anchor_lang::prelude::*;
 
-declare_id!("AZpNhwAtYUbsMnDGPFkTXnnkG2cDkUoSVqyYvyAfDbtL");
+declare_id!("FGLHHdApR2TXq9fXCdWE9SSeVzs4btmN77j7MjkS36dH");
 
 #[program]
 pub mod soltrans {
     use super::*;
 
-    pub fn transfer_from(ctx: Context<Transfer>, lamports: u64) -> Result<()> {
-        let transfer = &mut ctx.accounts.transfer;
+    pub fn transfer_native_sol(ctx: Context<SolSend>) -> Result<()> {
+        let lamports: u64 = 1000000;
 
-        transfer.from = *ctx.accounts.from.key;
-        transfer.to = *ctx.accounts.to.key;
-
-        // msg!(
-        //     "transfering to [{}] from [{}]",
-        //     &transfer.from.key(),
-        //     &transfer.to.key()
-        // );
-
-        let transfer_instruction = anchor_lang::solana_program::system_instruction::transfer(
-            &transfer.from.key(),
-            &transfer.to.key(),
+        let sol_transfer = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.from.key,
+            &ctx.accounts.to.key,
             lamports,
         );
-
         anchor_lang::solana_program::program::invoke(
-            &transfer_instruction,
+            &sol_transfer,
             &[
-                ctx.accounts.from.to_account_info(),
-                ctx.accounts.to.to_account_info(),
+                ctx.accounts.from.clone(),
+                ctx.accounts.to.clone(),
+                ctx.accounts.system_program.clone(),
             ],
-        );
-
-        msg!("transfer instruction: {:?}", transfer_instruction);
+        )?;
 
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct Transfer<'info> {
-    #[account(init, payer = from, space = 8 + 32 * 2 + 32 )]
-    transfer: Account<'info, Data>,
+pub struct SolSend<'info> {
+    #[account(mut, signer)]
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub from: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    from: Signer<'info>,
-    /// CHECK:
-    to: AccountInfo<'info>,
-    system_program: Program<'info, System>,
-}
-
-#[account]
-pub struct Data {
-    pub from: Pubkey,
-    pub to: Pubkey,
+    pub to: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub system_program: AccountInfo<'info>,
 }

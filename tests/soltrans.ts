@@ -19,24 +19,29 @@ describe("soltrans", () => {
   const program = anchor.workspace.Soltrans as Program<Soltrans>;
 
   it("Transfer", async () => {
+    let userKey = anchor.web3.Keypair.generate();
     let transferKey = anchor.web3.Keypair.generate();
     let toKey = anchor.web3.Keypair.generate();
 
-    // console.log("transferKey", transferKey);
-    // console.log("toKey", toKey);
+    console.log("transferKey", transferKey.publicKey.toString());
+    console.log("toKey", toKey.publicKey.toString());
 
     const connection = new Connection(clusterApiUrl('devnet'), 'confirmed')
-    const walletBalance = await connection.getBalance(toKey.publicKey);
+
+    const fromAirDropSignature = await connection.requestAirdrop(transferKey.publicKey, 2 * LAMPORTS_PER_SOL);
+    await connection.confirmTransaction(fromAirDropSignature);
+
+    const walletBalance = await connection.getBalance(transferKey.publicKey);
     console.log(`Wallet balance is ${walletBalance}`);
 
-    let tx = await program.rpc.transferFrom(new anchor.BN(1000), {
+    let tx = await program.rpc.transferNativeSol({
       accounts: {
-        transfer: transferKey.publicKey,
-        from: provider.wallet.publicKey,
+        from: transferKey.publicKey,
         to: toKey.publicKey,
+        user: userKey.publicKey,
         systemProgram: SystemProgram.programId
       },
-      signers: [transferKey]
+      signers: [userKey]
     });
 
 
